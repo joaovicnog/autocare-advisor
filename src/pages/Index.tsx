@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { VehicleInput } from '@/components/VehicleInput';
 import { ChecklistResults } from '@/components/ChecklistResults';
-import { parseVehicleDescription, generateChecklist, ChecklistResult } from '@/lib/vehicleParser';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import type { ChecklistResult } from '@/lib/vehicleParser';
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -11,14 +13,29 @@ const Index = () => {
   const handleSubmit = async (description: string) => {
     setIsLoading(true);
     
-    // Simulate processing time for better UX
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const vehicleInfo = parseVehicleDescription(description);
-    const checklist = generateChecklist(vehicleInfo);
-    
-    setResult(checklist);
-    setIsLoading(false);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-vehicle', {
+        body: { description }
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        toast.error('Erro ao analisar veículo. Tente novamente.');
+        return;
+      }
+
+      if (data.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      setResult(data as ChecklistResult);
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('Erro de conexão. Verifique sua internet.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleReset = () => {
