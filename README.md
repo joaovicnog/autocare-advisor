@@ -117,6 +117,26 @@ Essas variáveis são necessárias para:
 
 ---
 
+## 🏗️ Arquitetura do Sistema
+
+Abaixo estão os diagramas de arquitetura do **AutoCare Advisor**, seguindo o modelo C4.
+
+### 🌍 Diagrama de Contexto
+
+Mostra como o sistema se relaciona com usuários e serviços externos.
+
+![Diagrama de Contexto do AutoCare Advisor](docs/diagrams/contexto-autocare-advisor.svg)
+
+---
+
+### 🧱 Diagrama de Containers
+
+Apresenta os principais blocos técnicos da aplicação e como eles se comunicam.
+
+![Diagrama de Containers do AutoCare Advisor](docs/diagrams/container-autocare-advisor.svg)
+
+---
+
 ## ▶️ Executando Localmente
 
 Instale as dependências:
