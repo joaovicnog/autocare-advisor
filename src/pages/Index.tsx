@@ -1,10 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { VehicleInput } from '@/components/VehicleInput';
 import { ChecklistResults } from '@/components/ChecklistResults';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import type { ChecklistResult } from '@/lib/vehicleParser';
 import { normalizeVehicleInfo } from '@/lib/vehicleParser';
@@ -12,14 +10,6 @@ import { normalizeVehicleInfo } from '@/lib/vehicleParser';
 const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ChecklistResult | null>(null);
-  const { user, isLoading: authLoading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/login');
-    }
-  }, [user, authLoading, navigate]);
 
   const handleSubmit = async (description: string) => {
     setIsLoading(true);
