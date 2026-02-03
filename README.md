@@ -11,23 +11,23 @@ O usuário descreve o veículo em linguagem natural (modelo, ano, tipo de uso, q
 * 🔍 **Análise do Veículo em Linguagem Natural**
   O usuário pode descrever o veículo livremente — sem formulários rígidos.
 
-* 📋 **Checklist Preventivo Priorizado**
+* 📋 **Checklist Preventivo Priorizado**  
   Os itens são organizados por nível de importância:
 
   * **Crítico**
   * **Importante**
   * **Recomendado**
 
-* 🧠 **Justificativas Técnicas**
+* 🧠 **Justificativas Técnicas**  
   Cada item do checklist inclui uma explicação do *porquê* ele é importante para aquele perfil específico de veículo.
 
-* 📚 **Fontes Técnicas**
+* 📚 **Fontes Técnicas**  
   O sistema pode fornecer referências que sustentam as recomendações de manutenção.
 
-* 👤 **Autenticação de Usuário**
+* 👤 **Autenticação de Usuário**  
   Usuários podem se cadastrar e fazer login via Supabase Auth.
 
-* ☁️ **Processamento com IA Serverless**
+* ☁️ **Processamento com IA Serverless**  
   A análise do veículo é realizada por uma Edge Function do Supabase.
 
 ---
