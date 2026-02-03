@@ -7,12 +7,13 @@ const corsHeaders = {
 
 const systemPrompt = `Você é um Sistema de Suporte à Inspeção Veicular Preventiva com múltiplos especialistas automotivos.
 
-Sua tarefa é interpretar descrições de veículos e gerar um checklist de inspeção personalizado.
+Sua tarefa é interpretar descrições de veículos e gerar um checklist de inspeção personalizado, utilizando informações técnicas de fontes confiáveis quando disponíveis.
 
 **INSTRUÇÕES:**
 1. Identifique o modelo aproximado, idade estimada e tipo de uso do veículo
 2. Gere um checklist dividido em três categorias de prioridade
 3. Forneça justificativas técnicas acessíveis para cada item
+4. IMPORTANTE: Incorpore informações das fontes técnicas fornecidas quando relevantes
 
 **FORMATO DE RESPOSTA (JSON OBRIGATÓRIO):**
 {
@@ -27,21 +28,31 @@ Sua tarefa é interpretar descrições de veículos e gerar um checklist de insp
     {
       "item": "Nome do item",
       "descricao": "Descrição breve",
-      "justificativa": "Por que verificar este item é crítico para este perfil de veículo"
+      "justificativa": "Por que verificar este item é crítico para este perfil de veículo",
+      "fonte": "Nome da fonte técnica (se aplicável)"
     }
   ],
   "importantes": [
     {
       "item": "Nome do item",
       "descricao": "Descrição breve",
-      "justificativa": "Por que este item é importante"
+      "justificativa": "Por que este item é importante",
+      "fonte": "Nome da fonte técnica (se aplicável)"
     }
   ],
   "recomendados": [
     {
       "item": "Nome do item",
       "descricao": "Descrição breve",
-      "justificativa": "Por que este item é recomendado"
+      "justificativa": "Por que este item é recomendado",
+      "fonte": "Nome da fonte técnica (se aplicável)"
+    }
+  ],
+  "fontes": [
+    {
+      "titulo": "Título da fonte",
+      "url": "URL da fonte",
+      "descricao": "Breve descrição do conteúdo relevante"
     }
   ]
 }
@@ -54,7 +65,47 @@ Sua tarefa é interpretar descrições de veículos e gerar um checklist de insp
 - Personalize os itens com base no tipo de uso (urbano, estrada, comercial, rural, etc.)
 - Para veículos mais antigos (>10 anos), enfatize verificações de corrosão e desgaste
 - Para uso intenso (comercial, estrada de terra), priorize suspensão e sistema de arrefecimento
-- Use linguagem técnica mas acessível`;
+- Use linguagem técnica mas acessível
+- Cite as fontes técnicas quando a informação vier de pesquisa`;
+
+async function searchTechnicalSources(query: string, serperApiKey: string): Promise<any[]> {
+  try {
+    const searchQuery = `${query} manutenção preventiva inspeção veicular checklist técnico`;
+    
+    const response = await fetch("https://google.serper.dev/search", {
+      method: "POST",
+      headers: {
+        "X-API-KEY": serperApiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        q: searchQuery,
+        gl: "br",
+        hl: "pt-br",
+        num: 5,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Serper API error:", response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    
+    // Extract relevant results
+    const sources = (data.organic || []).slice(0, 5).map((result: any) => ({
+      titulo: result.title,
+      url: result.link,
+      snippet: result.snippet,
+    }));
+
+    return sources;
+  } catch (error) {
+    console.error("Error searching technical sources:", error);
+    return [];
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -76,6 +127,25 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    const SERPER_API_KEY = Deno.env.get("SERPER_API_KEY");
+    
+    // Search for technical sources if Serper API key is available
+    let technicalSources: any[] = [];
+    let sourcesContext = "";
+    
+    if (SERPER_API_KEY) {
+      console.log("Searching technical sources for:", description);
+      technicalSources = await searchTechnicalSources(description, SERPER_API_KEY);
+      
+      if (technicalSources.length > 0) {
+        sourcesContext = `\n\n**FONTES TÉCNICAS ENCONTRADAS (use para enriquecer suas recomendações):**\n${technicalSources.map((s, i) => 
+          `${i + 1}. ${s.titulo}\n   URL: ${s.url}\n   Resumo: ${s.snippet}`
+        ).join("\n\n")}`;
+        
+        console.log(`Found ${technicalSources.length} technical sources`);
+      }
+    }
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -86,7 +156,7 @@ serve(async (req) => {
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Descrição do veículo: ${description}` },
+          { role: "user", content: `Descrição do veículo: ${description}${sourcesContext}` },
         ],
         temperature: 0.7,
       }),
@@ -141,6 +211,15 @@ serve(async (req) => {
     }
     if (checklist.recomendados) {
       checklist.recomendados = checklist.recomendados.map((item: any) => ({ ...item, checked: false }));
+    }
+
+    // Add sources if not already included by AI
+    if (!checklist.fontes && technicalSources.length > 0) {
+      checklist.fontes = technicalSources.map(s => ({
+        titulo: s.titulo,
+        url: s.url,
+        descricao: s.snippet
+      }));
     }
 
     return new Response(JSON.stringify(checklist), {

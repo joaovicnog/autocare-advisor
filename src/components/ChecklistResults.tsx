@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChecklistSection } from './ChecklistSection';
 import { VehicleInfoCard } from './VehicleInfoCard';
-import { ClipboardList, RotateCcw, Printer } from 'lucide-react';
+import { ClipboardList, RotateCcw, Printer, ExternalLink, BookOpen } from 'lucide-react';
 import type { ChecklistResult, ChecklistItem } from '@/lib/vehicleParser';
 
 interface ChecklistResultsProps {
@@ -108,6 +108,45 @@ export function ChecklistResults({ result, onReset }: ChecklistResultsProps) {
         category="recommended"
         onToggleItem={(index) => toggleItem('recomendados', index)}
       />
+
+      {/* Technical Sources */}
+      {checklist.fontes && checklist.fontes.length > 0 && (
+        <div className="glass-card rounded-2xl p-6 animate-fade-in">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-accent/10">
+              <BookOpen className="w-5 h-5 text-accent-foreground" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Fontes Técnicas</h3>
+              <p className="text-sm text-muted-foreground">Referências utilizadas para este checklist</p>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            {checklist.fontes.map((fonte, index) => (
+              <a
+                key={index}
+                href={fonte.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block p-4 rounded-xl border border-border hover:bg-muted/50 transition-colors group"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                      {fonte.titulo}
+                    </h4>
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                      {fonte.descricao}
+                    </p>
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1 group-hover:text-primary transition-colors" />
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="glass-card rounded-2xl p-6 text-center animate-fade-in">
