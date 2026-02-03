@@ -8,7 +8,7 @@ O usuário descreve o veículo em linguagem natural (modelo, ano, tipo de uso, q
 
 ## ✨ Funcionalidades
 
-* 🔍 **Análise do Veículo em Linguagem Natural**
+* 🔍 **Análise do Veículo em Linguagem Natural**  
   O usuário pode descrever o veículo livremente — sem formulários rígidos.
 
 * 📋 **Checklist Preventivo Priorizado**  
