@@ -45,7 +45,7 @@ export function Header() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={signOut} className="gap-2 cursor-pointer">
+                <DropdownMenuItem onClick={async () => { await signOut(); }} className="gap-2 cursor-pointer">
                   <LogOut className="w-4 h-4" />
                   Sair
                 </DropdownMenuItem>
