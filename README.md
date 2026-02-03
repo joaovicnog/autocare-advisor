@@ -48,6 +48,9 @@ O usuário descreve o veículo em linguagem natural (modelo, ano, tipo de uso, q
 
 * Supabase (Autenticação e Edge Functions)
 * Edge Function `analyze-vehicle` (análise veicular com IA)
+* Google Gemini (via Lovable AI Gateway)
+* Serper API (busca de fontes técnicas)
+* Deno (runtime para Edge Functions)
 
 **Testes**
 
@@ -75,10 +78,10 @@ src/
 
 ## 🧠 Como Funciona
 
-1. O usuário insere uma descrição do veículo (exemplo:
-   *“Corolla 2014, uso principalmente urbano, 120.000 km”*).
+1. **Entrada do Usuário**: O usuário insere uma descrição do veículo em linguagem natural (exemplo:
+   *"Corolla 2014, uso principalmente urbano, 120.000 km"*).
 
-2. O frontend envia esse texto para a Edge Function do Supabase:
+2. **Chamada da Edge Function**: O frontend envia esse texto para a Edge Function do Supabase:
 
    ```ts
    supabase.functions.invoke('analyze-vehicle', {
@@ -86,34 +89,68 @@ src/
    })
    ```
 
-3. A Edge Function retorna dados estruturados contendo:
+3. **Processamento no Backend**:
 
-   * Informações do veículo
-   * Itens do checklist por prioridade
-   * Justificativas técnicas
-   * Fontes
+   a) **Busca de Fontes Técnicas** (se `SERPER_API_KEY` configurada):
+   - Consulta Serper API com queries como "manutenção preventiva + modelo do veículo"
+   - Retorna artigos técnicos, manuais e checklists confiáveis
+   
+   b) **Análise com IA** (Google Gemini via Lovable):
+   - Processa a descrição do veículo
+   - Combina com as fontes técnicas encontradas
+   - Gera checklist priorizado (Crítico → Importante → Recomendado)
+   - Cria justificativas técnicas para cada item
 
-4. O frontend então:
+4. **Resposta Estruturada**: A Edge Function retorna:
+
+   ```ts
+   interface ChecklistResult {
+     vehicleInfo: VehicleInfo;          // Modelo, ano, uso, km
+     criticos: ChecklistItem[];         // Itens críticos (segurança)
+     importantes: ChecklistItem[];      // Itens importantes
+     recomendados: ChecklistItem[];     // Itens recomendados
+     fontes?: TechnicalSource[];        // Referências técnicas
+   }
+   ```
+
+5. **Apresentação no Frontend**:
 
    * Normaliza as informações do veículo (`normalizeVehicleInfo`)
-   * Exibe o checklist categorizado
-   * Permite que o usuário revise os itens com clareza
+   * Exibe o checklist categorizado por prioridade
+   * Mostra justificativas técnicas para cada item
+   * Apresenta links para as fontes técnicas consultadas
+   * Permite marcação de itens concluídos
 
 ---
 
 ## 🔧 Variáveis de Ambiente
 
-Crie um arquivo `.env` na raiz do projeto:
+### Frontend (`.env` na raiz do projeto)
 
 ```env
 VITE_SUPABASE_URL=seu_supabase_project_url
 VITE_SUPABASE_PUBLISHABLE_KEY=sua_supabase_anon_key
 ```
 
-Essas variáveis são necessárias para:
+**Necessárias para:**
 
 * Autenticação de usuários
 * Chamada da Edge Function `analyze-vehicle`
+
+### Backend (Supabase Edge Function)
+
+Configure as seguintes variáveis de ambiente no Supabase:
+
+```env
+LOVABLE_API_KEY=sua_lovable_api_key
+SERPER_API_KEY=sua_serper_api_key
+```
+
+**O que cada uma faz:**
+
+* **LOVABLE_API_KEY**: Integração com Google Gemini via Lovable AI Gateway para análise de IA do veículo
+* **SERPER_API_KEY**: Integração com Serper para buscar fontes técnicas confiáveis (manuais, artigos, checklist)
+
 
 ---
 
@@ -184,26 +221,44 @@ npm run test:watch
 
 ## 🔌 Edge Function do Supabase
 
-Este frontend depende de uma Edge Function chamada:
+### Função Principal: `analyze-vehicle`
 
+Responsável pela análise inteligente do veículo e geração do checklist.
+
+**Entrada**:
+```ts
+{ description: string }
 ```
-analyze-vehicle
-```
 
-Ela deve:
-
-* Receber um JSON no formato `{ description: string }`
-* Retornar dados estruturados compatíveis com:
+**Saída**:
 
 ```ts
 interface ChecklistResult {
-  vehicleInfo: VehicleInfo;
-  criticos: ChecklistItem[];
-  importantes: ChecklistItem[];
-  recomendados: ChecklistItem[];
-  fontes?: TechnicalSource[];
+  vehicleInfo: VehicleInfo;          // Dados normalizados do veículo
+  criticos: ChecklistItem[];         // Itens de segurança crítica
+  importantes: ChecklistItem[];      // Manutenção importante
+  recomendados: ChecklistItem[];     // Itens recomendados
+  fontes?: TechnicalSource[];        // Fontes técnicas (quando Serper ativo)
 }
 ```
+
+### Fluxo Interno:
+
+1. **Validação**: Verifica se descrição foi fornecida
+2. **Busca Serper** (opcional): Se `SERPER_API_KEY` configurada:
+   - Pesquisa por "[descrição do veículo] manutenção preventiva inspeção checklist técnico"
+   - Configura para resultados em português (gl=br, hl=pt-br)
+   - Retorna até 5 resultados com título, URL e snippet
+3. **Análise com Gemini**: Processa descrição + fontes técnicas
+4. **Parsing**: Converte resposta JSON para o formato estruturado
+5. **Resposta**: Retorna checklist priorizado com fontes
+
+### Dependências:
+
+* `LOVABLE_API_KEY`: Acesso ao Google Gemini
+* `SERPER_API_KEY`: Opcional - para buscar fontes técnicas (recomendado)
+
+**Nota**: Se `SERPER_API_KEY` não estiver configurada, a função continua funcionando mas sem fontes técnicas externas.
 
 ---
 
