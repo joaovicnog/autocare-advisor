@@ -12,6 +12,13 @@ export interface ChecklistItem {
   descricao: string;
   justificativa: string;
   checked: boolean;
+  fonte?: string;
+}
+
+export interface TechnicalSource {
+  titulo: string;
+  url: string;
+  descricao: string;
 }
 
 export interface ChecklistResult {
@@ -19,6 +26,7 @@ export interface ChecklistResult {
   criticos: ChecklistItem[];
   importantes: ChecklistItem[];
   recomendados: ChecklistItem[];
+  fontes?: TechnicalSource[];
 }
 
 const modelos = [
