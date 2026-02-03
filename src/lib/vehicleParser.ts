@@ -1,10 +1,37 @@
 export interface VehicleInfo {
   modelo: string;
   ano: string;
+  anoEstimado?: string; // From API response
   idadeEstimada: string;
   tipoUso: string;
   quilometragem?: string;
+  quilometragemEstimada?: string; // From API response
   combustivel?: string;
+}
+
+// Transform API response to match our interface
+export function normalizeVehicleInfo(info: Partial<VehicleInfo> & Record<string, unknown>): VehicleInfo {
+  const anoAtual = new Date().getFullYear();
+  const anoRaw = info.ano || info.anoEstimado || 'Não informado';
+  const anoNumero = parseInt(anoRaw as string);
+  
+  let idadeEstimada = info.idadeEstimada || 'Não calculada';
+  if (!isNaN(anoNumero) && !info.idadeEstimada) {
+    const idade = anoAtual - anoNumero;
+    if (idade <= 3) idadeEstimada = 'Novo (até 3 anos)';
+    else if (idade <= 7) idadeEstimada = 'Seminovo (4-7 anos)';
+    else if (idade <= 12) idadeEstimada = 'Usado (8-12 anos)';
+    else idadeEstimada = `Antigo (${idade} anos)`;
+  }
+
+  return {
+    modelo: (info.modelo as string) || 'Não identificado',
+    ano: anoRaw as string,
+    idadeEstimada,
+    tipoUso: (info.tipoUso as string) || 'Misto',
+    quilometragem: (info.quilometragem || info.quilometragemEstimada) as string | undefined,
+    combustivel: info.combustivel as string | undefined,
+  };
 }
 
 export interface ChecklistItem {

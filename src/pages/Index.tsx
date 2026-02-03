@@ -5,6 +5,7 @@ import { ChecklistResults } from '@/components/ChecklistResults';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { ChecklistResult } from '@/lib/vehicleParser';
+import { normalizeVehicleInfo } from '@/lib/vehicleParser';
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +30,13 @@ const Index = () => {
         return;
       }
 
-      setResult(data as ChecklistResult);
+      // Normalize vehicle info to match our interface
+      const normalizedResult: ChecklistResult = {
+        ...data,
+        vehicleInfo: normalizeVehicleInfo(data.vehicleInfo),
+      };
+
+      setResult(normalizedResult);
     } catch (err) {
       console.error('Error:', err);
       toast.error('Erro de conexão. Verifique sua internet.');

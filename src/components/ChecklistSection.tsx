@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 import { ChevronDown, ChevronUp, AlertTriangle, AlertCircle, Info, Check } from 'lucide-react';
 import type { ChecklistItem } from '@/lib/vehicleParser';
 import { cn } from '@/lib/utils';
@@ -37,25 +37,26 @@ const categoryConfig = {
   }
 };
 
-export function ChecklistSection({ title, description, items, category, onToggleItem }: ChecklistSectionProps) {
-  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
-  const config = categoryConfig[category];
-  const Icon = config.icon;
+export const ChecklistSection = forwardRef<HTMLDivElement, ChecklistSectionProps>(
+  function ChecklistSection({ title, description, items, category, onToggleItem }, ref) {
+    const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+    const config = categoryConfig[category];
+    const Icon = config.icon;
 
-  const toggleExpand = (index: number) => {
-    const newExpanded = new Set(expandedItems);
-    if (newExpanded.has(index)) {
-      newExpanded.delete(index);
-    } else {
-      newExpanded.add(index);
-    }
-    setExpandedItems(newExpanded);
-  };
+    const toggleExpand = (index: number) => {
+      const newExpanded = new Set(expandedItems);
+      if (newExpanded.has(index)) {
+        newExpanded.delete(index);
+      } else {
+        newExpanded.add(index);
+      }
+      setExpandedItems(newExpanded);
+    };
 
-  const checkedCount = items.filter(item => item.checked).length;
+    const checkedCount = items.filter(item => item.checked).length;
 
-  return (
-    <div className={cn("checklist-card", config.border, "animate-slide-up")}>
+    return (
+      <div ref={ref} className={cn("checklist-card", config.border, "animate-slide-up")}>
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className={cn("p-2 rounded-lg", `bg-${category}/10`)}>
@@ -130,8 +131,9 @@ export function ChecklistSection({ title, description, items, category, onToggle
               </div>
             )}
           </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+);
