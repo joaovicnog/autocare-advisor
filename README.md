@@ -195,6 +195,15 @@ interface ChecklistResult {
 
 ---
 
+## 👨‍💻 Autores
+
+Projeto desenvolvido por:
+
+- João Victor Nogueira de Souza  
+- Marinel Borges Almeida
+
+---
+
 ## 📄 Licença
 
 Este projeto é para fins educacionais e de demonstração.
